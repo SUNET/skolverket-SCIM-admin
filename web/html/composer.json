@@ -1,0 +1,15 @@
+{
+  "name": "sunet/scimadminsv",
+  "type": "library",
+  "description": "A tool for handling SCIM updates for Skolverket at SUNET",
+  "authors": [
+      {
+          "name": "Björn Mattsson",
+          "email": "bjorn@sunet.se"
+      }
+  ],
+  "autoload": {
+    "psr-4": {"scimAdminSV\\": "src"}
+  }
+  
+}
