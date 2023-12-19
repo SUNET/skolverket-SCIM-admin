@@ -68,15 +68,15 @@ class HTML {
 
       const selectElement = document.querySelector("#selectList");
       const usertable = document.getElementById("list-users-table");
-      const invitetable = document.getElementById("list-invites-table");
+      const createform = document.getElementById("create-user-form");
 
       selectElement.addEventListener("change", (event) => {
         if (event.target.value == "List Users") {
           usertable.hidden = false;
-          invitetable.hidden = true;
+          createform.style.display="none";
         } else {
           usertable.hidden = true;
-          invitetable.hidden = false;
+          createform.style.display="block";
         }
       });
     </script>' . "\n";
