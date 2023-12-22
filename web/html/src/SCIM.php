@@ -18,6 +18,7 @@ class SCIM {
   private $scopeConfigured = false;
 
   const SCIM_USERS = 'Users/';
+  const SCIM_GROUPS = 'Groups/';
 
   const SQL_INSTANCE = ':Instance';
 
@@ -165,7 +166,7 @@ class SCIM {
 
     if (curl_errno($ch) == 0) {
       if ($response ==
-      '{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"Bearer token error","status":401}') {
+        '{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"Bearer token error","status":401}') {
         if ($first) {
           $this->getToken();
           return $this->request($method, $part, $data, $extraHeaders, false);
@@ -182,6 +183,29 @@ class SCIM {
           case 204 :
             // User removed
             return $response;
+          case 404 :
+            $result = json_decode($response);
+            if ($result->detail == 'User not found') {
+              return 'User didn\'t exists';
+            } else {
+              print_r($result);
+              exit;
+            }
+            break;
+          case 422 :
+            $result = json_decode($response);
+            if ($result->scimType == 'invalidSyntax') {
+              print "<pre>";
+              print_r($result->detail);
+              print "</pre>";
+              exit;
+            } else {
+              print "<pre>";
+              print_r($result);
+              print "</pre>";
+              exit;
+            }
+            break;
           default:
             print "<pre>";
             print_r($info);
@@ -313,5 +337,46 @@ class SCIM {
 
   public function getScope() {
     return $this->scope;
+  }
+
+  public function getGroupId($groupName) {
+    $request =
+    sprintf('{"schemas": ["urn:ietf:params:scim:api:messages:2.0:SearchRequest"],
+      "filter": "displayName eq \"%s\""}',
+      $groupName);
+    $groupInfo = $this->request('POST', self::SCIM_GROUPS.'.search', $request);
+    $groupArray = json_decode($groupInfo);
+    if ($groupArray->totalResults == 1 && isset($groupArray->Resources[0]->id)) {
+      return $groupArray->Resources[0]->id;
+    } else {
+      return false;
+    }
+  }
+
+  public function createGroup($groupName) {
+    $request =
+      sprintf('{ "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"], "displayName": "%s", "members": [] }',
+        $groupName);
+    $groupInfo = $this->request('POST', self::SCIM_GROUPS, $request);
+    $groupArray = json_decode($groupInfo);
+    if (isset($groupArray->id)) {
+      return $groupArray->id;
+    } else {
+      return false;
+    }
+  }
+
+  public function getGroup($id) {
+    /*
+    admin-gruppen kan heta vad som helst men ett förslag är "Organization Managers"
+    elev-konto-managers måste ligga i en grupp med namnet "Account Managers" (edited) 
+    */
+    $this->error = '';
+    $group = $this->request('GET', self::SCIM_GROUPS.$id, '');
+    return json_decode($group);
+  }
+
+  public function updateGroup($id, $data, $version) {
+    return $this->request('PUT', self::SCIM_GROUPS.$id, $data, array('if-match: ' . $version));
   }
 }

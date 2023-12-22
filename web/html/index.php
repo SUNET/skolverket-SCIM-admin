@@ -95,11 +95,24 @@ if (isset($_POST['action'])) {
       showMenu();
       listUsers($id);
       createAddUserForm();
+      listGroupMembers();
       break;
     case 'createUser' :
       showMenu(2);
-      createAddUserForm(true);
+      if ( $scim->getAdminAccess() > 9 ) {
+        createAddUserForm(true);
+      }
       listUsers('', false);
+      listGroupMembers();
+      break;
+    case 'addGroupMember' :
+      if ( $scim->getAdminAccess() > 19 ) {
+        addGroupMember($_POST['group'], $_POST['addMember']);
+      }
+      showMenu(3);
+      listGroupMembers(true);
+      listUsers('', false);
+      createAddUserForm(false);
       break;
     default :
   }
@@ -113,6 +126,7 @@ if (isset($_POST['action'])) {
         showMenu();
         listUsers($id);
         createAddUserForm();
+        listGroupMembers();
       }
       break;
     case 'listUsers' :
@@ -120,6 +134,7 @@ if (isset($_POST['action'])) {
       showMenu();
       listUsers($id);
       createAddUserForm();
+      listGroupMembers();
       break;
     case 'removeUser' :
       if ( $scim->getAdminAccess() > 19 ) {
@@ -131,18 +146,30 @@ if (isset($_POST['action'])) {
       showMenu();
       listUsers($id);
       createAddUserForm();
+      listGroupMembers();
+      break;
+    case 'removeGroupMember' :
+      if ( $scim->getAdminAccess() > 19 ) {
+        removeGroupMember($_GET['group'], $_GET['member']);
+      }
+      showMenu(3);
+      listGroupMembers(true);
+      listUsers('', false);
+      createAddUserForm();
       break;
     default:
       # listUsers
       showMenu();
       listUsers();
       createAddUserForm();
+      listGroupMembers();
       break;
   }
 } else {
   showMenu();
-  listUsers();
+  listUsers('', true);
   createAddUserForm();
+  listGroupMembers();
 }
 print "        <br>\n";
 $html->showFooter(true);
@@ -389,10 +416,94 @@ function showMenu($show = 1) {
           <select id="selectList">
             <option value="List Users">Lista användare</option>
             <option value="Create Users"%s>Skapa användare</option>
+            <option value="Groups"%s>Grupper</option>
           </select>
         </div>
         <div class="result">%s</div>
         <br>
         <br>
-        %s', $show == 2 ? ' selected' : '', $result, "\n");
+        %s', $show == 2 ? ' selected' : '', $show == 3 ? ' selected' : '', $result, "\n");
+}
+
+function listGroupMembers($shown = false) {
+  global $scim;
+  #"Account Managers"
+  if (! $accountManagersId = $scim->getGroupId("Account Managers")) {
+    # Only run create if above fails. If added in same if clause both is run if 1:s is OK
+    if (! $accountManagersId = $scim->createGroup("Account Managers")) { # NOSONAR
+      printf ('Problem creating group "Account Managers"');
+      exit;
+    }
+  }
+  if ($accountManagersId) {
+    $group = $scim->getGroup($accountManagersId);
+    printf('        <table id="list-elev-admins-table" class="table table-striped table-bordered elev-admins"%s>
+          <thead>
+            <tr><th colspan="2">Rättighet att skapa elever</th></tr>
+            <tr><th>Unikt ID</th><th>Namn</th></tr>
+          </thead>
+          <tbody>%s', $shown ? '' : ' hidden', "\n");
+    $users = $scim->getAllUsers();
+    foreach ($group->members as $member) {
+      printf('            <tr>
+            <td>%s <a href="?action=removeGroupMember&group=%s&member=%s">
+              <button class="btn btn-primary btn-sm">Radera</button>
+            </a></td>
+            <td>%s</td>
+          </tr>%s',
+        $users[$member->value]['attributes']->eduPersonPrincipalName,
+        $accountManagersId, $member->value,
+        $member->display, "\n");
+      unset($users[$member->value]);
+    }
+    printf ('            <tr><td colspan="2">Lägg till fler : <br>
+          <form id="add-group-member" method="POST">
+            <input type="hidden" name="action" value="addGroupMember">
+            <input type="hidden" name="group" value="%s">
+            <select id="addMember" name="addMember">%s', $accountManagersId, "\n");
+    foreach ($users as $user) {
+      if (isset($user['attributes']->eduPersonPrincipalName)) {
+        printf ('              <option value="%s">%s</option>%s', $user['id'], $user['fullName'], "\n");
+      }
+    }
+    printf ('            </select>
+            <div class="buttons">
+              <button type="submit" name="addUsers" class="btn btn-primary">Lägg till användare</button>
+            </div>
+          </form>
+        </td></tr>%s', "\n");
+    printf('          <tbody>%s        </table>%s', "\n", "\n");
+  }
+}
+
+function addGroupMember($groupId, $memberId) {
+  global $scim;
+  $ref = '$ref';
+  $group = $scim->getGroup($groupId);
+  $member = $scim->getUser($memberId);
+
+  $newMember = new \stdClass();
+  $newMember->value = $member->id;
+  $newMember->$ref = $member->meta->location;
+  $newMember->display = $member->name->formatted;
+  $group->members[] = $newMember;
+
+  $version = $group->meta->version;
+  unset($group->meta);
+  $scim->updateGroup($groupId, json_encode($group), $version);
+}
+
+function removeGroupMember($groupId, $memberId) {
+  global $scim;
+  $group = $scim->getGroup($groupId);
+
+  foreach ($group->members as $key => $member) {
+    if ($group->members[$key]->value == $memberId) {
+      unset($group->members[$key]);
+    }
+  }
+  sort($group->members);
+  $version = $group->meta->version;
+  unset($group->meta);
+  $scim->updateGroup($groupId, json_encode($group), $version);
 }

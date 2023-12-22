@@ -69,14 +69,21 @@ class HTML {
       const selectElement = document.querySelector("#selectList");
       const usertable = document.getElementById("list-users-table");
       const createform = document.getElementById("create-user-form");
+      const elevadminstable = document.getElementById("list-elev-admins-table");
 
       selectElement.addEventListener("change", (event) => {
         if (event.target.value == "List Users") {
           usertable.hidden = false;
           createform.style.display="none";
-        } else {
+          elevadminstable.hidden = true;
+        } else if (event.target.value == "Create Users") {
           usertable.hidden = true;
           createform.style.display="block";
+          elevadminstable.hidden = true;
+        } else {
+          usertable.hidden = true;
+          createform.style.display="none";
+          elevadminstable.hidden = false;
         }
       });
     </script>' . "\n";
