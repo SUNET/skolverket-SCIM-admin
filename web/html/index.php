@@ -190,24 +190,24 @@ function listUsers($id='0-0', $shown = true) {
 
 function showUser($user, $id, $scope) {
   printf('            <tr class="collapsible" data-id="%s" onclick="showId(\'%s\')">
-              <td>%s@%s</td>
+              <td>%s</td>
               <td>%s</td>
             </tr>
             <tr class="content" style="display: %s;">
-              <td>
-                <a a href="?action=editUser&id=%s"><button class="btn btn-primary btn-sm">Redigera</button></a><br>
+              <td colspan="2">
+                <a a href="?action=editUser&id=%s"><button class="btn btn-primary btn-sm">Redigera</button></a>
                 <a a href="?action=removeUser&id=%s"><button class="btn btn-primary btn-sm">Radera</button></a>
               </td>
-              <td><ul>%s',
-    $user['externalId'], $user['externalId'], substr($user['externalId'],0,11), $scope, $user['fullName'],
+            </tr>%s',
+    $user['externalId'], $user['externalId'], $user['attributes']->eduPersonPrincipalName, $user['fullName'],
     $id == $user['id'] ? 'table-row' : 'none', $user['id'], $user['id'], "\n");
-  if ($user['attributes']) {
+  /*if ($user['attributes']) {
     foreach($user['attributes'] as $key => $value) {
       $value = is_array($value) ? implode(", ", $value) : $value;
       printf (LI_ITEM, $key, $value, "\n");
     }
-  }
-  printf('              </ul></td>%s            </tr>%s', "\n", "\n");
+  }*/
+  #printf('              </td>%s            </tr>%s', "\n", "\n");
 }
 
 function editUser($id) {
@@ -238,8 +238,8 @@ function editUser($id) {
     htmlspecialchars($id), "\n");
   if (isset($_GET['debug'])) {
     print "<pre>";
-    #print_r($userArray);
-    print json_encode($userArray);
+    print_r($userArray);
+    #print json_encode($userArray);
     print "</pre>";
   }
 }
@@ -352,10 +352,10 @@ function createAddUserForm($shown = false) {
                 <td>%s</td>
                 <td>%s</td>
                 <td>%s</td>
-                <td>Skapad</td>
-              </tr>', $uniqID, $givenName, $familyName, $error, "\n");
+                <td>%s</td>
+              </tr>', $uniqID, $givenName, $familyName, $error);
 
-        $usersArea .= $uniqID . '#' . $givenName . '#' . $familyName . "#Skapad\n";
+        $usersArea .= $uniqID . '#' . $givenName . '#' . $familyName . '#' . $error . "\n";
       } elseif ($uniqID == '' && $givenName == '' && $familyName == '') {
         # Empty row. Skip
       } else {
@@ -395,8 +395,8 @@ kazof-vagus#Björn#Mattsson">%s</textarea>
 }
 
 function createUser($uniqID, $givenName, $familyName) {
-  global $scim;
-  $externalID = $uniqID . '@eduid.se';
+  global $scim, $backendScope;
+  $externalID = $uniqID . '@' . $backendScope;
   $eppn = $uniqID . '@' . $scim->getScope();
   if ($scim->getIdFromExternalId($externalID)) {
     return 'Kontot fanns redan';

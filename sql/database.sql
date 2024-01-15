@@ -1,5 +1,5 @@
 CREATE TABLE `params` (
-  `instance` varchar(20) DEFAULT NULL,
+  `instance` varchar(30) DEFAULT NULL,
   `id` varchar(20) DEFAULT NULL,
   `value` text DEFAULT NULL
 )

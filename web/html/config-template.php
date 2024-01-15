@@ -12,8 +12,6 @@ $apiUrl = "https://api.dev.eduid.se/scim/test/";      # URL to the SCIM API
 
 $instances = array (
   'sunet.se'=> array (
-    'sourceIdP' => 'https://idp.sunet.se/idp',
-    'backendIdP' => 'https://login.idp.eduid.se/idp.xml',
     # Array ('Shibb-name in apache' => 'name in satosa internal/SCIM')
 
     'attributes2migrate' => array (
