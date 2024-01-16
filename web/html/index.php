@@ -17,19 +17,6 @@ $errorURL = isset($_SERVER['Meta-errorURL']) ?
 $errorURL = str_replace(array('ERRORURL_TS', 'ERRORURL_RP', 'ERRORURL_TID'),
   array(time(), 'https://'. $_SERVER['SERVER_NAME'] . '/shibboleth', $_SERVER['Shib-Session-ID']), $errorURL);
 
-if (isset($_SERVER['Meta-Assurance-Certification'])) {
-  $AssuranceCertificationFound = false;
-  foreach (explode(';',$_SERVER['Meta-Assurance-Certification']) as $AssuranceCertification) {
-    if ($AssuranceCertification == 'http://www.swamid.se/policy/assurance/al1') {
-      $AssuranceCertificationFound = true;
-    }
-  }
-  if (! $AssuranceCertificationFound) {
-    $errors .= sprintf('%s has no AssuranceCertification (http://www.swamid.se/policy/assurance/al1) ',
-      $_SERVER['Shib-Identity-Provider']);
-  }
-}
-
 if (isset($_SERVER['eduPersonPrincipalName'])) {
   $AdminUser = $_SERVER['eduPersonPrincipalName'];
 } elseif (isset($_SERVER['subject-id'])) {
