@@ -267,7 +267,7 @@ function createAddUserForm($shown = false) {
     $usersArea = '';
     $lines = explode("\r\n", $_POST['users']);
     foreach ($lines as $line) {
-      $fields = explode("#", $line);
+      $fields = explode(";", $line);
       $error = '';
       $uniqID = '';
       $givenName = '';
@@ -302,7 +302,7 @@ function createAddUserForm($shown = false) {
                 <td><input type="text" name="familyName[]" value="%s"></td>
                 <td>%s</td>
               </tr>%s', $uniqID, $givenName, $familyName, $error, "\n");
-      $usersArea .= $uniqID . '#' . $givenName . '#' . $familyName . '#' . $error . "\n";
+      $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
     }
   } elseif (isset($_POST['createUsers'])) {
     $usersArea = '';
@@ -342,7 +342,7 @@ function createAddUserForm($shown = false) {
                 <td>%s</td>
               </tr>', $uniqID, $givenName, $familyName, $error);
 
-        $usersArea .= $uniqID . '#' . $givenName . '#' . $familyName . '#' . $error . "\n";
+        $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
       } elseif ($uniqID == '' && $givenName == '' && $familyName == '') {
         # Empty row. Skip
       } else {
@@ -352,7 +352,7 @@ function createAddUserForm($shown = false) {
                 <td><input type="text" name="familyName[]" value="%s"></td>
                 <td>%s</td>
               </tr>%s', $uniqID, $givenName, $familyName, $error, "\n");
-        $usersArea .= $uniqID . '#' . $givenName . '#' . $familyName . '#' . $error . "\n";
+        $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
       }
       $index ++;
     }
@@ -373,8 +373,8 @@ function createAddUserForm($shown = false) {
           <div class="buttons">
             <button type="submit" name="createUsers" class="btn btn-primary">Skapa användare</button>
           </div>
-          <textarea id="users" name="users" rows="4" cols="100" placeholder="Unikt ID#Förnamn#Efternamn
-kazof-vagus#Björn#Mattsson">%s</textarea>
+          <textarea id="users" name="users" rows="4" cols="100" placeholder="Unikt ID;Förnamn;Efternamn
+kazof-vagus;Björn;Mattsson">%s</textarea>
           <div class="buttons">
             <button type="submit" name="populateUsers" class="btn btn-primary">Fyll i användare</button>
           </div>
