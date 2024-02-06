@@ -165,58 +165,68 @@ class SCIM {
     $response = curl_exec($ch);
 
     if (curl_errno($ch) == 0) {
-      if ($response ==
-        '{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"Bearer token error","status":401}') {
-        if ($first) {
-          $this->getToken();
-          return $this->request($method, $part, $data, $extraHeaders, false);
-        } else {
-          print "Fail to get Bearer token";
-          exit;
-        }
-      } else {
-        $info = curl_getinfo($ch);
-        switch ($info['http_code']) {
-          case 200 :
-            // User updated
-          case 201 :
-          case 204 :
-            // User removed
-            return $response;
-          case 404 :
-            $result = json_decode($response);
-            if ($result->detail == 'User not found') {
-              return 'User didn\'t exists';
-            } else {
+      $info = curl_getinfo($ch);
+      switch ($info['http_code']) {
+        case 200 :
+          // User updated
+        case 201 :
+        case 204 :
+          // User removed
+          return $response;
+        case 401 :
+          $result = json_decode($response);
+          switch ($result->detail) {
+            case'Bearer token error' :
+              if ($first) {
+                $this->getToken();
+                return $this->request($method, $part, $data, $extraHeaders, false);
+              } else {
+                print "Fail to get Bearer token";
+                exit;
+              }
+              break;
+            case 'Data owner requested in access token denied' :
+              print "We doesn't have access to this Data-owner via the configured key.";
+              exit;
+              break;
+            default :
               print_r($result);
               exit;
-            }
-            break;
-          case 422 :
-            $result = json_decode($response);
-            if ($result->scimType == 'invalidSyntax') {
-              print "<pre>";
-              print_r($result->detail);
-              print "</pre>";
-              exit;
-            } else {
-              print "<pre>";
-              print_r($result);
-              print "</pre>";
-              exit;
-            }
-            break;
-          default:
+          }
+          break;
+        case 404 :
+          $result = json_decode($response);
+          if ($result->detail == 'User not found') {
+            return 'User didn\'t exists';
+          } else {
+            print_r($result);
+            exit;
+          }
+          break;
+        case 422 :
+          $result = json_decode($response);
+          if ($result->scimType == 'invalidSyntax') {
             print "<pre>";
-            print_r($info);
-            print "</pre><br><pre>";
-            print $response;
-            print "</pre><br><pre>";
-            print $data;
+            print_r($result->detail);
             print "</pre>";
             exit;
-            break;
-        }
+          } else {
+            print "<pre>";
+            print_r($result);
+            print "</pre>";
+            exit;
+          }
+          break;
+        default:
+          print "<pre>";
+          print_r($info);
+          print "</pre><br><pre>";
+          print $response;
+          print "</pre><br><pre>";
+          print $data;
+          print "</pre>";
+          exit;
+          break;
       }
     } else {
       print "Error";
@@ -246,6 +256,11 @@ class SCIM {
         }
         if (isset($userArray->name->formatted)) {
           $userList[$Resource->id]['fullName'] = $userArray->name->formatted;
+        } else {
+          $userList[$Resource->id]['fullName'] = isset($userArray->name->givenName) ? $userArray->name->givenName : '';
+          $userList[$Resource->id]['fullName'] .= ' ';
+          $userList[$Resource->id]['fullName'] .= isset($userArray->name->familyName) ?
+            $userArray->name->familyName : '';
         }
         unset($userArray);
         unset($user);
