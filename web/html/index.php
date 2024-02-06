@@ -61,12 +61,12 @@ if ($errors != '') {
         Logged into wrong IdP ?<br> You are trying with <b>%s</b>.<br>Click <a href="%s">here</a> to logout.
       </div>%s    </div>%s',
      "\n", $_SERVER['Shib-Identity-Provider'],
-     'https://'. $_SERVER['SERVER_NAME'] . '/Shibboleth.sso/Logout', "\n", "\n");
+     'https://'. $_SERVER['SERVER_NAME'] . '/Shibboleth.sso/Logout?return=/', "\n", "\n");
   $html->showFooter(false);
   exit;
 }
 
-$displayName = '<div> Logged in as : <br> ' . $fullName . ' (' . $AdminUser .')</div>';
+$displayName = '<div> Logged in as : <br> ' . $fullName . ' (' . $AdminUser .')<br><a href="/Shibboleth.sso/Logout?return=/"><button class="btn btn-primary btn-sm">Logga ut</button></a></div>';
 $html->setDisplayName($displayName);
 $html->showHeaders('SCIM Admin');
 
@@ -170,12 +170,14 @@ function listUsers($id='0-0', $shown = true) {
           </thead>
           <tbody>%s', $shown ? '' : ' hidden', "\n");
   foreach ($users as $user) {
-    showUser($user, $id, $scim->getScope());
+    if (substr($user['externalId'],0,3) != 'ma-') {
+      showUser($user, $id);
+    }
   }
   printf('          <tbody>%s        </table>%s', "\n", "\n");
 }
 
-function showUser($user, $id, $scope) {
+function showUser($user, $id) {
   printf('            <tr class="collapsible" data-id="%s" onclick="showId(\'%s\')">
               <td>%s</td>
               <td>%s</td>
@@ -188,13 +190,6 @@ function showUser($user, $id, $scope) {
             </tr>%s',
     $user['externalId'], $user['externalId'], $user['attributes']->eduPersonPrincipalName, $user['fullName'],
     $id == $user['id'] ? 'table-row' : 'none', $user['id'], $user['id'], "\n");
-  /*if ($user['attributes']) {
-    foreach($user['attributes'] as $key => $value) {
-      $value = is_array($value) ? implode(", ", $value) : $value;
-      printf (LI_ITEM, $key, $value, "\n");
-    }
-  }*/
-  #printf('              </td>%s            </tr>%s', "\n", "\n");
 }
 
 function editUser($id) {
@@ -449,7 +444,7 @@ function listGroupMembers($shown = false) {
             <input type="hidden" name="group" value="%s">
             <select id="addMember" name="addMember">%s', $accountManagersId, "\n");
     foreach ($users as $user) {
-      if (isset($user['attributes']->eduPersonPrincipalName)) {
+      if (isset($user['attributes']->eduPersonPrincipalName) && substr($user['externalId'],0,3) != 'ma-') {
         printf ('              <option value="%s">%s</option>%s', $user['id'], $user['fullName'], "\n");
       }
     }
