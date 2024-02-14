@@ -4,6 +4,14 @@
 
 ## 
 
+## 2024-02-06-v01
+
+### Changed
+
+- Better error-handling
+- Added logout-button
+- Hide students in lists (users staring with ma-)
+
 ## 2024-01-19-v01
 
 ### Changed
