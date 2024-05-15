@@ -38,6 +38,22 @@ if (isset($_SERVER['displayName'])) {
   $fullName = '';
 }
 
+if (isset($_SERVER['eduPersonAssurance'])) {
+  $acceptedAssurance = false;
+  foreach (explode(';', $_SERVER['eduPersonAssurance']) as $subAssurance) {
+    if ($subAssurance == 'http://www.swamid.se/policy/assurance/al3') {
+      $acceptedAssurance = true;
+    }
+  }
+  if (! $acceptedAssurance) {
+    $errors .= 'Kontot måste vara minst LoA2!';
+  }
+} else {
+  $errors .= 'Missing eduPersonAssurance in SAML response ' .
+    str_replace(array('ERRORURL_CODE', 'ERRORURL_CTX'),
+    array('IDENTIFICATION_FAILURE', 'eduPersonAssurance'), $errorURL);
+}
+
 if ($scim->checkScopeConfigured()) {
   if (! $scim->checkAccess($AdminUser)) {
     $errors .= $AdminUser . ' is not allowed to login to this page.';
@@ -55,10 +71,10 @@ if ($scim->checkScopeConfigured()) {
 if ($errors != '') {
   $html->showHeaders('SCIM Admin - Problem');
   printf('%s    <div class="row alert alert-danger" role="alert">
-      <div class="col">%s        <b>Errors:</b><br>%s        %s%s      </div>%s    </div>%s',
+      <div class="col">%s        <b>Fel:</b><br>%s        %s%s      </div>%s    </div>%s',
     "\n", "\n", "\n", str_ireplace("\n", "<br>", $errors), "\n", "\n","\n");
   printf('    <div class="row alert alert-info" role="info">%s      <div class="col">
-        Logged into wrong IdP ?<br> You are trying with <b>%s</b>.<br>Click <a href="%s">here</a> to logout.
+        Loggat in med fel Idp / Konto ?<br>Du har loggat in med <b>%s</b>.<br>Klicka <a href="%s">här</a> för att logga ut.
       </div>%s    </div>%s',
      "\n", $_SERVER['Shib-Identity-Provider'],
      'https://'. $_SERVER['SERVER_NAME'] . '/Shibboleth.sso/Logout?return=/', "\n", "\n");
