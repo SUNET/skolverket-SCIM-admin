@@ -77,7 +77,7 @@ class SCIM {
     $data->client->key = $this->keyName;
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $this->authURL);
+    curl_setopt($ch, CURLOPT_URL, $this->authURL . 'transaction');
     curl_setopt($ch, CURLOPT_PORT , 443);
     curl_setopt($ch, CURLOPT_VERBOSE, 0);
     curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -128,7 +128,7 @@ class SCIM {
     }
   }
 
-  private function request($method, $part, $data, $extraHeaders = array(), $first = true) {
+  private function request($method, $part, $data= '', $extraHeaders = array(), $first = true) {
     $ch = curl_init();
     switch ($method) {
       case 'POST' :
@@ -245,7 +245,7 @@ class SCIM {
     if (isset($idListArray->schemas) &&
       $idListArray->schemas[0] == 'urn:ietf:params:scim:api:messages:2.0:ListResponse' ) {
       foreach ($idListArray->Resources as $Resource) {
-        $user = $this->request('GET', self::SCIM_USERS.$Resource->id, '');
+        $user = $this->request('GET', self::SCIM_USERS.$Resource->id);
         $userArray = json_decode($user);
         $userList[$Resource->id] = array('id' => $Resource->id,
           'externalId' => $userArray->externalId,
@@ -280,7 +280,7 @@ class SCIM {
   }
 
   public function getUser($id) {
-    $user = $this->request('GET', self::SCIM_USERS.$id, '');
+    $user = $this->request('GET', self::SCIM_USERS.$id);
     return json_decode($user);
   }
 
@@ -387,7 +387,7 @@ class SCIM {
     elev-konto-managers måste ligga i en grupp med namnet "Account Managers" (edited) 
     */
     $this->error = '';
-    $group = $this->request('GET', self::SCIM_GROUPS.$id, '');
+    $group = $this->request('GET', self::SCIM_GROUPS.$id);
     return json_decode($group);
   }
 
