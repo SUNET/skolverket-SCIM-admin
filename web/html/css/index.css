@@ -154,6 +154,12 @@ header {
   font-size: 1.5rem;
 }
 
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeeba;
+}
+
 hr {
   margin: 2.5rem 0;
   height: 1px;
