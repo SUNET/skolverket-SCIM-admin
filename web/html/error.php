@@ -52,6 +52,8 @@ function showFatalProfileException() {?>
       "\n          <p>statusCode : " . htmlspecialchars($_GET['statusCode']) . '</p>' : '';
     print isset($_GET['statusCode2']) ?
       "\n          <p>statusCode2 : " . htmlspecialchars($_GET['statusCode2']) . '</p>' : '';
+    print isset($_GET['statusMessage']) ?
+      "\n          <p>statusMessage : " . htmlspecialchars($_GET['statusMessage']) . '</p>' : '';
     print "\n        </div>\n";
  }
 
