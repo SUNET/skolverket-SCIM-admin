@@ -5,17 +5,17 @@ use PDO;
 use PDOException;
 
 class SCIM {
-  private $error = '';
   private $scope = '';
   private $authURL = '';
   private $keyName = '';
   private $certFile = '';
   private $keyFile = '';
   private $apiURL = '';
-  private $attributes2migrate = '';
   private $adminUsers = array();
   private $adminAccess = 0;
   private $scopeConfigured = false;
+  private $userListFetched = false;
+  private $userList = array();
 
   const SCIM_USERS = 'Users/';
   const SCIM_GROUPS = 'Groups/';
@@ -42,7 +42,6 @@ class SCIM {
     $this->apiURL = $apiUrl;
     if (isset($instances[$this->scope])) {
       $this->scopeConfigured = true;
-      $this->attributes2migrate = $instances[$this->scope]['attributes2migrate'];
       $this->adminUsers = $instances[$this->scope]['adminUsers'];
 
       // Get token from DB. If no param exists create
@@ -230,46 +229,56 @@ class SCIM {
       }
     } else {
       print "Error";
-      $this->error = 'Error while';
       return false;
     }
   }
 
   public function getAllUsers() {
-    $this->error = '';
-    $userList = array();
-    $idList = $this->request('POST',
-      self::SCIM_USERS.'.search','{"schemas": ["urn:ietf:params:scim:api:messages:2.0:SearchRequest"],
-      "filter": "meta.lastModified ge \"1900-01-01\"", "startIndex": 1, "count": 100}');
-    $idListArray = json_decode($idList);
-    if (isset($idListArray->schemas) &&
-      $idListArray->schemas[0] == 'urn:ietf:params:scim:api:messages:2.0:ListResponse' ) {
-      foreach ($idListArray->Resources as $Resource) {
-        $user = $this->request('GET', self::SCIM_USERS.$Resource->id);
-        $userArray = json_decode($user);
-        $userList[$Resource->id] = array('id' => $Resource->id,
-          'externalId' => $userArray->externalId,
-          'fullName' => '', 'attributes' => false);
-        if (isset ($userArray->{self::SCIM_NUTID_SCHEMA})) {
-          $userList[$Resource->id] = $this->checkNutid(
-            $userArray->{self::SCIM_NUTID_SCHEMA},$userList[$Resource->id]);
-        }
-        if (isset($userArray->name->formatted)) {
-          $userList[$Resource->id]['fullName'] = $userArray->name->formatted;
-        } else {
-          $userList[$Resource->id]['fullName'] = isset($userArray->name->givenName) ? $userArray->name->givenName : '';
-          $userList[$Resource->id]['fullName'] .= ' ';
-          $userList[$Resource->id]['fullName'] .= isset($userArray->name->familyName) ?
-            $userArray->name->familyName : '';
-        }
-        unset($userArray);
-        unset($user);
-      }
-      return $userList;
-    } else {
-      printf('Unknown schema : %s', $idListArray->schemas[0]);
-      return false;
+    if ($this->userListFetched) {
+      return $this->userList;
     }
+    $totalResults = 5000;
+    $index = 1;
+    while ($index < $totalResults) {
+      $idList = $this->request('POST',
+        self::SCIM_USERS.'.search','{"schemas": ["urn:ietf:params:scim:api:messages:2.0:SearchRequest"],
+        "attributes" : ["givenName", "familyName", "formatted", "externalId"],
+        "filter": "meta.lastModified ge \"1900-01-01\"", "startIndex": '.$index.', "count": 300}');
+      $index += 300;
+      $idListArray = json_decode($idList);
+      if (isset($idListArray->schemas) &&
+        $idListArray->schemas[0] == 'urn:ietf:params:scim:api:messages:2.0:ListResponse' ) {
+        $totalResults = $idListArray->totalResults;
+        foreach ($idListArray->Resources as $Resource) {
+          if (substr($Resource->externalId,0,3) != 'ma-') {
+            $this->userList[$Resource->id] = array('id' => $Resource->id,
+              'externalId' => $Resource->externalId,
+              'fullName' => '', 'attributes' => false);
+            $user = $this->request('GET', self::SCIM_USERS.$Resource->id);
+            $userArray = json_decode($user);
+            if (isset ($userArray->{self::SCIM_NUTID_SCHEMA})) {
+              $this->userList[$Resource->id] = $this->checkNutid(
+                $userArray->{self::SCIM_NUTID_SCHEMA},$this->userList[$Resource->id]);
+            }
+            if (isset($userArray->name->formatted)) {
+              $this->userList[$Resource->id]['fullName'] = $userArray->name->formatted;
+            } else {
+              $this->userList[$Resource->id]['fullName'] = isset($userArray->name->givenName) ? $userArray->name->givenName : '';
+              $this->userList[$Resource->id]['fullName'] .= ' ';
+              $this->userList[$Resource->id]['fullName'] .= isset($userArray->name->familyName) ?
+                $userArray->name->familyName : '';
+            }
+            unset($userArray);
+            unset($user);
+          }
+        }
+      } else {
+        printf('Unknown schema : %s', $idListArray->schemas[0]);
+        return false;
+      }
+    }
+    $this->userListFetched = true;
+    return $this->userList;
   }
 
   private function checkNutid($nutid, $userList) {
@@ -386,7 +395,6 @@ class SCIM {
     admin-gruppen kan heta vad som helst men ett förslag är "Organization Managers"
     elev-konto-managers måste ligga i en grupp med namnet "Account Managers" (edited) 
     */
-    $this->error = '';
     $group = $this->request('GET', self::SCIM_GROUPS.$id);
     return json_decode($group);
   }
