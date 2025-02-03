@@ -16,6 +16,7 @@ class SCIM {
   private $scopeConfigured = false;
   private $userListFetched = false;
   private $userList = array();
+  private $sentryDSN = '';
 
   const SCIM_USERS = 'Users/';
   const SCIM_GROUPS = 'Groups/';
@@ -40,6 +41,7 @@ class SCIM {
     $this->certFile = $authCert;
     $this->keyFile = $authKey;
     $this->apiURL = $apiUrl;
+    $this->sentryDSN = $sentryDSN;
     if (isset($instances[$this->scope])) {
       $this->scopeConfigured = true;
       $this->adminUsers = $instances[$this->scope]['adminUsers'];
@@ -117,10 +119,12 @@ class SCIM {
           print_r($info);
           print "</pre>";
           print $response;
+          $this->sendSentry('Error from auth-server : '. $response);
           exit;
           break;
       }
     } else {
+      $this->sendSentry('Error on request to auth-server');
       print "Error on request to auth-server";
       curl_close($ch);
       exit;
@@ -180,6 +184,8 @@ class SCIM {
                 $this->getToken();
                 return $this->request($method, $part, $data, $extraHeaders, false);
               } else {
+                // Capture a message
+                $this->sendSentry('Failed to get Bearer token');
                 print "Fail to get Bearer token";
                 exit;
               }
@@ -224,6 +230,7 @@ class SCIM {
           print "</pre><br><pre>";
           print $data;
           print "</pre>";
+          $this->sendSentry('Error from scim-server : '. $response);
           exit;
           break;
       }
@@ -401,5 +408,10 @@ class SCIM {
 
   public function updateGroup($id, $data, $version) {
     return $this->request('PUT', self::SCIM_GROUPS.$id, $data, array('if-match: ' . $version));
+  }
+
+  private function sendSentry($message) {
+    $client = new \Raven_Client($this->sentryDSN);
+    $client->getIdent($client->captureMessage($message));
   }
 }

@@ -8,8 +8,10 @@
           "email": "bjorn@sunet.se"
       }
   ],
+  "require": {
+    "raven/raven": "*"
+  },
   "autoload": {
     "psr-4": {"scimAdminSV\\": "src"}
   }
-  
 }
