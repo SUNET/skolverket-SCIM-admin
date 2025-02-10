@@ -3,7 +3,7 @@
 require_once 'vendor/autoload.php';
 include_once './config.php'; # NOSONAR
 
-$html = new scimAdminSV\HTML($Mode);
+$html = new scimAdminSV\HTML();
 $html->showHeaders('SCIM Admin - Problem');
 
 $errorURL = isset($_GET['errorURL']) ?

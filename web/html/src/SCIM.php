@@ -17,6 +17,8 @@ class SCIM {
   private $userListFetched = false;
   private $userList = array();
   private $sentryDSN = '';
+  private $db;
+  private $token = '';
 
   const SCIM_USERS = 'Users/';
   const SCIM_GROUPS = 'Groups/';
@@ -28,9 +30,9 @@ class SCIM {
   public function __construct() {
     include __DIR__ . '/../config.php'; # NOSONAR
     try {
-      $this->Db = new PDO("mysql:host=$dbServername;dbname=$dbName", $dbUsername, $dbPassword);
+      $this->db = new PDO("mysql:host=$dbServername;dbname=$dbName", $dbUsername, $dbPassword);
       // set the PDO error mode to exception
-      $this->Db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch(PDOException $e) {
       echo "Error: " . $e->getMessage();
     }
@@ -47,14 +49,14 @@ class SCIM {
       $this->adminUsers = $instances[$this->scope]['adminUsers'];
 
       // Get token from DB. If no param exists create
-      $paramsHandler = $this->Db->prepare('SELECT `value` FROM params WHERE `id` = :Id AND `instance` = :Instance;');
+      $paramsHandler = $this->db->prepare('SELECT `value` FROM params WHERE `id` = :Id AND `instance` = :Instance;');
       $paramsHandler->bindValue(':Id', 'token');
       $paramsHandler->bindValue(self::SQL_INSTANCE, $this->scope);
       $paramsHandler->execute();
       if ($param = $paramsHandler->fetch(PDO::FETCH_ASSOC)) {
         $this->token = $param['value'];
       } else {
-        $addParamsHandler = $this->Db->prepare('INSERT INTO params (`instance`,`id`, `value`)
+        $addParamsHandler = $this->db->prepare('INSERT INTO params (`instance`,`id`, `value`)
           VALUES ( :Instance, ' ."'token', '')");
         $addParamsHandler->bindValue(self::SQL_INSTANCE, $this->scope);
         $addParamsHandler->execute();
@@ -106,7 +108,7 @@ class SCIM {
           $token = json_decode($response);
           $tokenValue = $token->access_token->value;
 
-          $tokenHandler = $this->Db->prepare("UPDATE params
+          $tokenHandler = $this->db->prepare("UPDATE params
             SET `value` = :Token
             WHERE `id` = 'token' AND `instance` = :Instance");
           $tokenHandler->bindValue(':Token', $tokenValue);
@@ -263,9 +265,11 @@ class SCIM {
               'fullName' => '', 'attributes' => false);
             $user = $this->request('GET', self::SCIM_USERS.$Resource->id);
             $userArray = json_decode($user);
-            if (isset ($userArray->{self::SCIM_NUTID_SCHEMA})) {
-              $this->userList[$Resource->id] = $this->checkNutid(
-                $userArray->{self::SCIM_NUTID_SCHEMA},$this->userList[$Resource->id]);
+            if (isset ($userArray->{self::SCIM_NUTID_SCHEMA}) &&
+              isset($userArray->{self::SCIM_NUTID_SCHEMA}->profiles) &&
+              sizeof((array)$userArray->{self::SCIM_NUTID_SCHEMA}->profiles) &&
+              isset($userArray->{self::SCIM_NUTID_SCHEMA}->profiles->connectIdp)) {
+              $this->userList[$Resource->id]['attributes'] = $userArray->{self::SCIM_NUTID_SCHEMA}->profiles->connectIdp->attributes;
             }
             if (isset($userArray->name->formatted)) {
               $this->userList[$Resource->id]['fullName'] = $userArray->name->formatted;
@@ -286,13 +290,6 @@ class SCIM {
     }
     $this->userListFetched = true;
     return $this->userList;
-  }
-
-  private function checkNutid($nutid, $userList) {
-    if (isset($nutid->profiles) && sizeof((array)$nutid->profiles) && isset($nutid->profiles->connectIdp)) {
-      $userList['attributes'] = $nutid->profiles->connectIdp->attributes;
-    }
-    return $userList;
   }
 
   public function getUser($id) {

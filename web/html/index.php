@@ -7,7 +7,7 @@ require_once 'vendor/autoload.php';
 
 include_once './config.php'; # NOSONAR
 
-$html = new scimAdminSV\HTML($Mode);
+$html = new scimAdminSV\HTML();
 
 $scim = new scimAdminSV\SCIM();
 
@@ -204,7 +204,7 @@ function showUser($user, $id) {
                 <a a href="?action=removeUser&id=%s"><button class="btn btn-primary btn-sm">Radera</button></a>
               </td>
             </tr>%s',
-    $user['externalId'], $user['externalId'], $user['attributes']->eduPersonPrincipalName, $user['fullName'],
+    $user['externalId'], $user['externalId'], isset($user['attributes']->eduPersonPrincipalName) ? $user['attributes']->eduPersonPrincipalName : '', $user['fullName'],
     $id == $user['id'] ? 'table-row' : 'none', $user['id'], $user['id'], "\n");
 }
 
@@ -312,8 +312,8 @@ function createAddUserForm($shown = false) {
                 <td><input type="text" name="givenName[]" value="%s"></td>
                 <td><input type="text" name="familyName[]" value="%s"></td>
                 <td>%s</td>
-              </tr>%s', $uniqID, $givenName, $familyName, $error, "\n");
-      $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
+              </tr>%s', htmlspecialchars($uniqID), htmlspecialchars($givenName), htmlspecialchars($familyName), $error, "\n");
+      $usersArea .= htmlspecialchars($uniqID) . ';' . htmlspecialchars($givenName) . ';' . htmlspecialchars($familyName) . ';' . $error . "\n";
     }
   } elseif (isset($_POST['createUsers'])) {
     $usersArea = '';
@@ -351,9 +351,9 @@ function createAddUserForm($shown = false) {
                 <td>%s</td>
                 <td>%s</td>
                 <td>%s</td>
-              </tr>', $uniqID, $givenName, $familyName, $error);
+              </tr>', htmlspecialchars($uniqID), htmlspecialchars($givenName), htmlspecialchars($familyName), $error);
 
-        $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
+        $usersArea .= htmlspecialchars($uniqID) . ';' . htmlspecialchars($givenName) . ';' . htmlspecialchars($familyName) . ';' . $error . "\n";
       } elseif ($uniqID == '' && $givenName == '' && $familyName == '') {
         # Empty row. Skip
       } else {
@@ -362,8 +362,8 @@ function createAddUserForm($shown = false) {
                 <td><input type="text" name="givenName[]" value="%s"></td>
                 <td><input type="text" name="familyName[]" value="%s"></td>
                 <td>%s</td>
-              </tr>%s', $uniqID, $givenName, $familyName, $error, "\n");
-        $usersArea .= $uniqID . ';' . $givenName . ';' . $familyName . ';' . $error . "\n";
+              </tr>%s', htmlspecialchars($uniqID), htmlspecialchars($givenName), htmlspecialchars($familyName), $error, "\n");
+        $usersArea .= htmlspecialchars($uniqID) . ';' . htmlspecialchars($givenName) . ';' . htmlspecialchars($familyName) . ';' . $error . "\n";
       }
       $index ++;
     }
