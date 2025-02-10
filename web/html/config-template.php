@@ -1,7 +1,7 @@
 <?php
 $dbServername = "mariadb";
 $dbUsername = "admin";
-$dbPassword = "adminpwd";
+$dbPassword = "adminpwd"; # NOSONAR
 $dbName = "scim";
 
 $authUrl = 'https://auth-test.sunet.se/transaction';  # URL to the auth server to get token

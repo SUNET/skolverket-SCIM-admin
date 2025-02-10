@@ -397,7 +397,7 @@ class SCIM {
   public function getGroup($id) {
     /*
     admin-gruppen kan heta vad som helst men ett förslag är "Organization Managers"
-    elev-konto-managers måste ligga i en grupp med namnet "Account Managers" (edited) 
+    elev-konto-managers måste ligga i en grupp med namnet "Account Managers" (edited)
     */
     $group = $this->request('GET', self::SCIM_GROUPS.$id);
     return json_decode($group);

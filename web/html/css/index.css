@@ -401,7 +401,6 @@ tr th {
   text-align: left;
   padding-left: 20px;
   width: 40%;
-  /* text-transform: uppercase; */
   font-family: "Inter-Regular", Arial, Helvetica, sans-serif;
   word-wrap: break-word;
 }
@@ -590,7 +589,6 @@ select::-ms-expand {
   top: 0;
   right: 0;
   padding: 0 1em;
-  /* background: #2b2e2e; */
   cursor: pointer;
   pointer-events: none;
   transition: 0.25s all ease;

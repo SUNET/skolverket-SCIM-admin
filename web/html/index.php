@@ -41,7 +41,7 @@ if (isset($_SERVER['displayName'])) {
 if (isset($_SERVER['eduPersonAssurance'])) {
   $acceptedAssurance = false;
   foreach (explode(';', $_SERVER['eduPersonAssurance']) as $subAssurance) {
-    if ($subAssurance == 'http://www.swamid.se/policy/assurance/al3') {
+    if ($subAssurance == 'http://www.swamid.se/policy/assurance/al3') { # NOSONAR
       $acceptedAssurance = true;
     }
   }
@@ -237,7 +237,6 @@ function editUser($id) {
   if (isset($_GET['debug'])) {
     print "<pre>";
     print_r($userArray);
-    #print json_encode($userArray);
     print "</pre>";
   }
 }
