@@ -3,10 +3,10 @@ namespace scimAdminSV;
 
 class HTML {
   # Setup
-  public function __construct($mode='Prod') {
+  private $displayName = '';
+
+  public function __construct() {
     $this->displayName = '';
-    $this->mode = $mode;
-    $this->scope = str_replace('/','',$_SERVER['CONTEXT_PREFIX']);
   }
 
   ###
