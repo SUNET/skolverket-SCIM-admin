@@ -110,7 +110,7 @@ if (isset($_POST['action'])) {
       break;
     case 'addGroupMember' :
       if ( $scim->getAdminAccess() > 19 ) {
-        addGroupMember($_POST['group'], $_POST['addMember']);
+        addGroupMember(htmlspecialchars($_POST['group']), htmlspecialchars($_POST['addMember']));
       }
       showMenu(3);
       listGroupMembers(true);
@@ -324,7 +324,7 @@ function createAddUserForm($shown = false) {
       $givenName = '';
       $familyName = '';
       if (isset($_POST['uniqID'][$index])) {
-        $uniqID = $_POST['uniqID'][$index];
+        $uniqID = htmlspecialchars($_POST['uniqID'][$index]);
         if (strlen($uniqID) != 11) {
           $error .= 'Felaktigt format på ID:t;';
         }
@@ -368,7 +368,7 @@ function createAddUserForm($shown = false) {
       $index ++;
     }
   } elseif (isset($_POST['users'])) {
-    $usersArea = $_POST['users'];
+    $usersArea = htmlspecialchars($_POST['users']);
   } else {
     $usersArea = '';
   }
